@@ -8,20 +8,26 @@ public class tetris_3d {
 			context canvas = new context();
 			canvas.setBackground(java.awt.Color.BLACK);
 			canvas.resize_callback = (c, w, h) -> {
-				c.data = new triangle[] {
-					new triangle(
-						new vec4(0, 0, 0, 1),
-						new vec4(w, 0, 0, 1),
-						new vec4(w, h, 0, 1),
-						java.awt.Color.WHITE
-					),
-					new triangle(
-						new vec4(      w/2, (h-110)/2, 0, 1),
-						new vec4((w+120)/2, (h+110)/2, 0, 1),
-						new vec4((w-120)/2, (h+110)/2, 0, 1),
-						java.awt.Color.RED
-					)
+				vec4[] vertices = new vec4[] {
+					new vec4(0, 0, 0, 1),
+					new vec4(w, 0, 0, 1),
+					new vec4(w, h, 0, 1),
+					new vec4(      w/2, (h-110)/2, 0, 1),
+					new vec4((w+120)/2, (h+110)/2, 0, 1),
+					new vec4((w-120)/2, (h+110)/2, 0, 1)
 				};
+				int[] vertex_indices = new int[] {
+					0, 1, 2,
+					3, 4, 5
+				};
+				java.awt.Color[] colors = new java.awt.Color[] {
+					java.awt.Color.WHITE,
+					java.awt.Color.RED
+				};
+				int[] color_indices = new int[] {
+					0, 1
+				};
+				c.data = triangle.construct(vertices, vertex_indices, colors, color_indices);
 			};
 			window.add(canvas);
 
@@ -88,6 +94,31 @@ class triangle {
 		if (color != null)
 			g.setColor(color);
 		g.fillPolygon(x, y, 3);
+	}
+
+	public static triangle[] construct(vec4[] v, int[] vi) {
+		triangle[] data = new triangle[vi.length / 3];
+		for (int i = 0, j = 0; i < vi.length; i += 3, ++j)
+			data[j] = new triangle(v[vi[i]], v[vi[i+1]], v[vi[i+2]]);
+		return data;
+	}
+
+	public static triangle[] construct(vec4[] v, int[] vi, java.awt.Color[] c, int[] ci) {
+		triangle[] data = triangle.construct(v, vi);
+		for (int i = 0; i < data.length; ++i)
+			data[i].color = c[ci[i]];
+		return data;
+	}
+
+	public static triangle[] construct(vec4[] v, int[] vi, vec4[] c, int[] ci) {
+		triangle[] data = triangle.construct(v, vi);
+		java.awt.Color[] cc = new java.awt.Color[c.length];
+		for (int i = 0; i < data.length; ++i) {
+			if (cc[i] == null)
+				cc[i] = new java.awt.Color(c[ci[i]].r(), c[ci[i]].g(), c[ci[i]].b(), c[ci[i]].a());
+			data[i].color = cc[i];
+		}
+		return data;
 	}
 }
 
