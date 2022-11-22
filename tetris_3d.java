@@ -9,16 +9,10 @@ public class tetris_3d {
 						paintComponent((java.awt.Graphics2D) g, getWidth(), getHeight());
 					}
 
-					private static void triangle(java.awt.Graphics g, int x1, int y1, int x2, int y2, int x3, int y3) {
-						g.fillPolygon(new int[] {x1, x2, x3}, new int[] {y1, y2, y3}, 3);
-					}
-
 					private void paintComponent(java.awt.Graphics2D g, int w, int h) {
 						setBackground(java.awt.Color.BLACK);
-						g.setColor(java.awt.Color.WHITE);
-						triangle(g, 0, 0, w, 0, w, h);
-						g.setColor(java.awt.Color.RED);
-						triangle(g, w/2, (h-110)/2, (w+120)/2, (h+110)/2, (w-120)/2, (h+110)/2);
+						(new triangle(0, 0, 0, w, 0, 0, w, h, 0, java.awt.Color.WHITE)).draw(g);
+						(new triangle(w/2, (h-110)/2, 0, (w+120)/2, (h+110)/2, 0, (w-120)/2, (h+110)/2, 0, java.awt.Color.RED)).draw(g);
 					}
 				};
 				window.add(panel);
@@ -29,6 +23,64 @@ public class tetris_3d {
 			}
 		});
 		System.out.printf("Hello, world!\n");
+	}
+}
+
+class triangle {
+	public int[] x;
+	public int[] y;
+	public double z;
+	public java.awt.Color color;
+
+	public triangle(
+		float x1, float y1, float z1,
+		float x2, float y2, float z2,
+		float x3, float y3, float z3,
+		java.awt.Color color
+	) {
+		x = new int[] {(int) x1, (int) x2, (int) x3};
+		y = new int[] {(int) y1, (int) y2, (int) y3};
+		z = ((double) z1 + (double) z2 + (double) z3) / 3.0;
+		this.color = color;
+	}
+
+	public triangle(
+		float x1, float y1, float z1,
+		float x2, float y2, float z2,
+		float x3, float y3, float z3,
+		float r, float g, float b, float a
+	) {
+		this(x1, y1, z1, x2, y2, z2, x3, y3, z3, new java.awt.Color(r, g, b, a));
+	}
+
+	public triangle(
+		float x1, float y1, float z1,
+		float x2, float y2, float z2,
+		float x3, float y3, float z3,
+		float r, float g, float b
+	) {
+		this(x1, y1, z1, x2, y2, z2, x3, y3, z3, r, g, b, 1.0f);
+	}
+
+	public triangle(vec4 v1, vec4 v2, vec4 v3, java.awt.Color c) {
+		this(v1.x(), v1.y(), v1.z(), v2.x(), v2.y(), v2.z(), v3.x(), v2.y(), v3.z(), c);
+	}
+
+	public triangle(vec4 v1, vec4 v2, vec4 v3, float r, float g, float b, float a) {
+		this(v1, v2, v3, new java.awt.Color(r, g, b, a));
+	}
+
+	public triangle(vec4 v1, vec4 v2, vec4 v3, float r, float g, float b) {
+		this(v1, v2, v3, r, g, b, 1.0f);
+	}
+
+	public triangle(vec4 v1, vec4 v2, vec4 v3, vec4 c) {
+		this(v1, v2, v3, c.r(), c.g(), c.b(), c.a());
+	}
+
+	public void draw(java.awt.Graphics2D g) {
+		g.setColor(color);
+		g.fillPolygon(x, y, 3);
 	}
 }
 
