@@ -14,20 +14,39 @@ public class tetris_3d {
 					new vec4(w, h, 0, 1),
 					new vec4(      w/2, (h-110)/2, 0, 1),
 					new vec4((w+120)/2, (h+110)/2, 0, 1),
-					new vec4((w-120)/2, (h+110)/2, 0, 1)
-				};
-				int[] vertex_indices = new int[] {
-					0, 1, 2,
-					3, 4, 5
+					new vec4((w-120)/2, (h+110)/2, 0, 1),
+					new vec4(w/10, 0, 0, 1),
+					new vec4(w/10, h, 0, 1),
+					new vec4(0, h/7*6, 0, 1),
+					new vec4(w, h/7*6, 0, 1)
 				};
 				java.awt.Color[] colors = new java.awt.Color[] {
 					java.awt.Color.WHITE,
-					java.awt.Color.RED
+					java.awt.Color.RED,
+					java.awt.Color.CYAN
 				};
-				int[] color_indices = new int[] {
-					0, 1
+				java.awt.Stroke[] strokes = new java.awt.Stroke[] {
+					((java.awt.Graphics2D) c.getGraphics()).getStroke()
 				};
-				c.data = triangle.construct(vertices, vertex_indices, colors, color_indices);
+				primitive[] triangles = triangle.construct(vertices, colors,
+					new int[] {
+						0, 1, 2,
+						3, 4, 5
+					},
+					new int[] {0, 1}
+				);
+				primitive[] lines = line.construct(vertices, colors, strokes,
+					new int[] {
+						6, 7,
+						8, 9
+					},
+					new int[] {2, 2},
+					new int[] {0, 0}
+				);
+				primitive[] data = new primitive[triangles.length + lines.length];
+				System.arraycopy(triangles, 0, data, 0, triangles.length);
+				System.arraycopy(lines, 0, data, triangles.length, lines.length);
+				c.data = data;
 			};
 			window.add(canvas);
 
@@ -48,7 +67,7 @@ class context extends javax.swing.JPanel {
 
 	public resize_callback_t resize_callback;
 
-	public triangle[] data;
+	public primitive[] data;
 
 	public void paintComponent(java.awt.Graphics g) {
 		super.paintComponent(g);
@@ -63,26 +82,32 @@ class context extends javax.swing.JPanel {
 		}
 		if (data != null) {
 			java.awt.Graphics2D g2d = (java.awt.Graphics2D) g;
-			for (triangle t : data)
+			for (primitive t : data)
 				t.draw(g2d);
 		}
 	}
 }
 
-class triangle {
-	public int[] x;
-	public int[] y;
+abstract class primitive {
 	public double z;
+	abstract public void draw(java.awt.Graphics2D g);
+}
+
+class triangle extends primitive {
+	public void draw(java.awt.Graphics2D g) {
+		g.setColor(color);
+		g.fillPolygon(x, y, 3);
+	}
+
 	public java.awt.Color color;
 
-	public triangle(vec4 v1, vec4 v2, vec4 v3) {
+	public int[] x;
+	public int[] y;
+
+	public triangle(vec4 v1, vec4 v2, vec4 v3, java.awt.Color c) {
 		x = new int[] {(int) v1.x(), (int) v2.x(), (int) v3.x()};
 		y = new int[] {(int) v1.y(), (int) v2.y(), (int) v3.y()};
 		z = ((double) v1.z() + (double) v2.z() + (double) v3.z()) / 3.0;
-	}
-
-	public triangle(vec4 v1, vec4 v2, vec4 v3, java.awt.Color c) {
-		this(v1, v2, v3);
 		color = c;
 	}
 
@@ -90,33 +115,64 @@ class triangle {
 		this(v1, v2, v3, new java.awt.Color(c.r(), c.g(), c.b(), c.a()));
 	}
 
-	public void draw(java.awt.Graphics2D g) {
-		if (color != null)
-			g.setColor(color);
-		g.fillPolygon(x, y, 3);
-	}
-
-	public static triangle[] construct(vec4[] v, int[] vi) {
+	public static triangle[] construct(vec4[] v, java.awt.Color[] c, int[] vi, int[] ci) {
 		triangle[] data = new triangle[vi.length / 3];
 		for (int i = 0, j = 0; i < vi.length; i += 3, ++j)
-			data[j] = new triangle(v[vi[i]], v[vi[i+1]], v[vi[i+2]]);
+			data[j] = new triangle(v[vi[i]], v[vi[i+1]], v[vi[i+2]], c[ci[j]]);
 		return data;
 	}
 
-	public static triangle[] construct(vec4[] v, int[] vi, java.awt.Color[] c, int[] ci) {
-		triangle[] data = triangle.construct(v, vi);
-		for (int i = 0; i < data.length; ++i)
-			data[i].color = c[ci[i]];
-		return data;
-	}
-
-	public static triangle[] construct(vec4[] v, int[] vi, vec4[] c, int[] ci) {
-		triangle[] data = triangle.construct(v, vi);
+	public static triangle[] construct(vec4[] v, vec4[] c, int[] vi, int[] ci) {
+		triangle[] data = new triangle[vi.length / 3];
 		java.awt.Color[] cc = new java.awt.Color[c.length];
-		for (int i = 0; i < data.length; ++i) {
-			if (cc[i] == null)
-				cc[i] = new java.awt.Color(c[ci[i]].r(), c[ci[i]].g(), c[ci[i]].b(), c[ci[i]].a());
-			data[i].color = cc[i];
+		for (int i = 0, j = 0; i < vi.length; i += 3, ++j) {
+			if (cc[j] == null)
+				cc[j] = new java.awt.Color(c[ci[j]].r(), c[ci[j]].g(), c[ci[j]].b(), c[ci[j]].a());
+			data[j] = new triangle(v[vi[i]], v[vi[i+1]], v[vi[i+2]], cc[j]);
+		}
+		return data;
+	}
+}
+
+class line extends primitive {
+	public void draw(java.awt.Graphics2D g) {
+		g.setColor(color);
+		g.setStroke(stroke);
+		g.drawPolyline(x, y, 2);
+	}
+
+	public java.awt.Color color;
+	public java.awt.Stroke stroke;
+
+	public int[] x;
+	public int[] y;
+
+	public line(vec4 v1, vec4 v2, java.awt.Color c, java.awt.Stroke s) {
+		x = new int[] {(int) v1.x(), (int) v2.x()};
+		y = new int[] {(int) v1.y(), (int) v2.y()};
+		z = ((double) v1.z() + (double) v2.z()) / 2.0;
+		color = c;
+		stroke = s;
+	}
+
+	public line(vec4 v1, vec4 v2, vec4 c, java.awt.Stroke s) {
+		this(v1, v2, new java.awt.Color(c.r(), c.g(), c.b(), c.a()), s);
+	}
+
+	public static line[] construct(vec4[] v, java.awt.Color[] c, java.awt.Stroke[] s, int[] vi, int[] ci, int[] si) {
+		line[] data = new line[vi.length / 2];
+		for (int i = 0, j = 0; i < vi.length; i += 2, ++j)
+			data[j] = new line(v[vi[i]], v[vi[i+1]], c[ci[j]], s[si[j]]);
+		return data;
+	}
+
+	public static line[] construct(vec4[] v, vec4[] c, java.awt.Stroke[] s, int[] vi, int[] ci, int[] si) {
+		line[] data = new line[vi.length / 2];
+		java.awt.Color[] cc = new java.awt.Color[c.length];
+		for (int i = 0, j = 0; i < vi.length; i += 2, ++j) {
+			if (cc[j] == null)
+				cc[j] = new java.awt.Color(c[ci[j]].r(), c[ci[j]].g(), c[ci[j]].b(), c[ci[j]].a());
+			data[j] = new line(v[vi[i]], v[vi[i+1]], cc[j], s[si[j]]);
 		}
 		return data;
 	}
