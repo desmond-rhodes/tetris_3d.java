@@ -9,16 +9,16 @@ public class tetris_3d {
 			canvas.setBackground(java.awt.Color.BLACK);
 			canvas.resize_callback = (c, w, h) -> {
 				vec4[] vertices = new vec4[] {
-					new vec4(0, 0, 0, 1),
-					new vec4(w, 0, 0, 1),
-					new vec4(w, h, 0, 1),
+					new vec4(0, 0, -1, 1),
+					new vec4(w, 0, -1, 1),
+					new vec4(w, h, -1, 1),
 					new vec4(      w/2, (h-110)/2, 0, 1),
 					new vec4((w+120)/2, (h+110)/2, 0, 1),
 					new vec4((w-120)/2, (h+110)/2, 0, 1),
-					new vec4(w/10, 0, 0, 1),
-					new vec4(w/10, h, 0, 1),
-					new vec4(0, h/7*6, 0, 1),
-					new vec4(w, h/7*6, 0, 1)
+					new vec4(w/10, 0, 1, 1),
+					new vec4(w/10, h, 1, 1),
+					new vec4(0, h/7*6, 1, 1),
+					new vec4(w, h/7*6, 1, 1)
 				};
 				java.awt.Color[] colors = new java.awt.Color[] {
 					java.awt.Color.WHITE,
@@ -30,8 +30,8 @@ public class tetris_3d {
 				};
 				primitive[] triangles = triangle.construct(vertices, colors,
 					new int[] {
+						3, 4, 5,
 						0, 1, 2,
-						3, 4, 5
 					},
 					new int[] {0, 1}
 				);
@@ -44,8 +44,9 @@ public class tetris_3d {
 					new int[] {0, 0}
 				);
 				primitive[] data = new primitive[triangles.length + lines.length];
-				System.arraycopy(triangles, 0, data, 0, triangles.length);
-				System.arraycopy(lines, 0, data, triangles.length, lines.length);
+				System.arraycopy(lines, 0, data, 0, lines.length);
+				System.arraycopy(triangles, 0, data, lines.length, triangles.length);
+				java.util.Arrays.sort(data, primitive.compare);
 				c.data = data;
 			};
 			window.add(canvas);
@@ -89,6 +90,11 @@ class context extends javax.swing.JPanel {
 }
 
 abstract class primitive {
+	public static final java.util.Comparator<primitive> compare = (a, b) -> {
+		if (a.z > b.z) return  1;
+		if (a.z < b.z) return -1;
+		return 0;
+	};
 	public double z;
 	abstract public void draw(java.awt.Graphics2D g);
 }
