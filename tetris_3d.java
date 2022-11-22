@@ -1,26 +1,26 @@
 public class tetris_3d {
 	public static void main(String[] args) {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				javax.swing.JFrame window = new javax.swing.JFrame("Tetris 3D");
-				javax.swing.JPanel panel = new javax.swing.JPanel() {
-					public void paintComponent(java.awt.Graphics g) {
-						super.paintComponent(g);
-						paintComponent((java.awt.Graphics2D) g, getWidth(), getHeight());
-					}
+		javax.swing.SwingUtilities.invokeLater(() -> {
+			javax.swing.JFrame window = new javax.swing.JFrame("Tetris 3D");
+			window.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+			window.setSize(480, 360);
 
-					private void paintComponent(java.awt.Graphics2D g, int w, int h) {
-						setBackground(java.awt.Color.BLACK);
-						(new triangle(0, 0, 0, w, 0, 0, w, h, 0, java.awt.Color.WHITE)).draw(g);
-						(new triangle(w/2, (h-110)/2, 0, (w+120)/2, (h+110)/2, 0, (w-120)/2, (h+110)/2, 0, java.awt.Color.RED)).draw(g);
-					}
-				};
-				window.add(panel);
-				window.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-				window.setSize(480, 360);
-				window.setLocationRelativeTo(null);
-				window.setVisible(true);
-			}
+			javax.swing.JPanel panel = new javax.swing.JPanel() {
+				public void paintComponent(java.awt.Graphics g) {
+					super.paintComponent(g);
+					paintComponent((java.awt.Graphics2D) g, getWidth(), getHeight());
+				}
+
+				private void paintComponent(java.awt.Graphics2D g, int w, int h) {
+					setBackground(java.awt.Color.BLACK);
+					(new triangle(0, 0, 0, w, 0, 0, w, h, 0, java.awt.Color.WHITE)).draw(g);
+					(new triangle(w/2, (h-110)/2, 0, (w+120)/2, (h+110)/2, 0, (w-120)/2, (h+110)/2, 0, java.awt.Color.RED)).draw(g);
+				}
+			};
+			window.add(panel);
+
+			window.setLocationRelativeTo(null);
+			window.setVisible(true);
 		});
 		System.out.printf("Hello, world!\n");
 	}
@@ -132,7 +132,7 @@ class vec4 {
 		return e[0]*v.e[0] + e[1]*v.e[1] + e[2]*v.e[2] + e[3]*v.e[3];
 	}
 	public float magnitude() {
-		return (float) java.lang.Math.sqrt(dot(this));
+		return (float) Math.sqrt(dot(this));
 	}
 	public vec4 normalize() {
 		return divide(magnitude());
