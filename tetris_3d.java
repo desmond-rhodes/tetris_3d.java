@@ -9,8 +9,18 @@ public class tetris_3d {
 			canvas.setBackground(java.awt.Color.BLACK);
 			canvas.resize_callback = (c, w, h) -> {
 				c.data = new triangle[] {
-					new triangle(0, 0, 0, w, 0, 0, w, h, 0, java.awt.Color.WHITE),
-					new triangle(w/2, (h-110)/2, 0, (w+120)/2, (h+110)/2, 0, (w-120)/2, (h+110)/2, 0, java.awt.Color.RED)
+					new triangle(
+						new vec4(0, 0, 0, 1),
+						new vec4(w, 0, 0, 1),
+						new vec4(w, h, 0, 1),
+						java.awt.Color.WHITE
+					),
+					new triangle(
+						new vec4(      w/2, (h-110)/2, 0, 1),
+						new vec4((w+120)/2, (h+110)/2, 0, 1),
+						new vec4((w-120)/2, (h+110)/2, 0, 1),
+						java.awt.Color.RED
+					)
 				};
 			};
 			window.add(canvas);
@@ -59,54 +69,24 @@ class triangle {
 	public double z;
 	public java.awt.Color color;
 
-	public triangle(
-		float x1, float y1, float z1,
-		float x2, float y2, float z2,
-		float x3, float y3, float z3,
-		java.awt.Color color
-	) {
-		x = new int[] {(int) x1, (int) x2, (int) x3};
-		y = new int[] {(int) y1, (int) y2, (int) y3};
-		z = ((double) z1 + (double) z2 + (double) z3) / 3.0;
-		this.color = color;
-	}
-
-	public triangle(
-		float x1, float y1, float z1,
-		float x2, float y2, float z2,
-		float x3, float y3, float z3,
-		float r, float g, float b, float a
-	) {
-		this(x1, y1, z1, x2, y2, z2, x3, y3, z3, new java.awt.Color(r, g, b, a));
-	}
-
-	public triangle(
-		float x1, float y1, float z1,
-		float x2, float y2, float z2,
-		float x3, float y3, float z3,
-		float r, float g, float b
-	) {
-		this(x1, y1, z1, x2, y2, z2, x3, y3, z3, r, g, b, 1.0f);
+	public triangle(vec4 v1, vec4 v2, vec4 v3) {
+		x = new int[] {(int) v1.x(), (int) v2.x(), (int) v3.x()};
+		y = new int[] {(int) v1.y(), (int) v2.y(), (int) v3.y()};
+		z = ((double) v1.z() + (double) v2.z() + (double) v3.z()) / 3.0;
 	}
 
 	public triangle(vec4 v1, vec4 v2, vec4 v3, java.awt.Color c) {
-		this(v1.x(), v1.y(), v1.z(), v2.x(), v2.y(), v2.z(), v3.x(), v2.y(), v3.z(), c);
-	}
-
-	public triangle(vec4 v1, vec4 v2, vec4 v3, float r, float g, float b, float a) {
-		this(v1, v2, v3, new java.awt.Color(r, g, b, a));
-	}
-
-	public triangle(vec4 v1, vec4 v2, vec4 v3, float r, float g, float b) {
-		this(v1, v2, v3, r, g, b, 1.0f);
+		this(v1, v2, v3);
+		color = c;
 	}
 
 	public triangle(vec4 v1, vec4 v2, vec4 v3, vec4 c) {
-		this(v1, v2, v3, c.r(), c.g(), c.b(), c.a());
+		this(v1, v2, v3, new java.awt.Color(c.r(), c.g(), c.b(), c.a()));
 	}
 
 	public void draw(java.awt.Graphics2D g) {
-		g.setColor(color);
+		if (color != null)
+			g.setColor(color);
 		g.fillPolygon(x, y, 3);
 	}
 }
@@ -115,10 +95,6 @@ class vec4 {
 	private float[] e;
 
 	public vec4(float e1, float e2, float e3, float e4) { e = new float[] {e1, e2, e3, e4}; }
-	public vec4(float e1, float e2, float e3) { this(e1, e2, e3, 1.0f); }
-	public vec4(float e1, float e2) { this(e1, e2, 0.0f, 1.0f); }
-	public vec4(float e1) { this(e1, 0.0f, 0.0f, 1.0f); }
-	public vec4() { this(0.0f, 0.0f, 0.0f, 1.0f); }
 
 	public vec4 clone() { return new vec4(e[0], e[1], e[2], e[3]); }
 
@@ -181,51 +157,6 @@ class mat4 {
 			  e9,  e10,  e11,  e12,
 			 e13,  e14,  e15,  e16
 		};
-	}
-
-	public mat4(
-		float  e1, float  e2, float  e3,
-		float  e5, float  e6, float  e7,
-		float  e9, float e10, float e11
-	) {
-		this(
-			  e1,   e2,   e3, 0.0f,
-			  e5,   e6,   e7, 0.0f,
-			  e9,  e10,  e11, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		);
-	}
-
-	public mat4(
-		float  e1, float  e2,
-		float  e5, float  e6
-	) {
-		this(
-			  e1,   e2, 0.0f, 0.0f,
-			  e5,   e6, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		);
-	}
-
-	public mat4(
-		float  e1
-	) {
-		this(
-			  e1, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		);
-	}
-
-	public mat4() {
-		this(
-			1.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		);
 	}
 
 	public mat4 clone() {
