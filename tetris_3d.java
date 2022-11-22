@@ -5,24 +5,51 @@ public class tetris_3d {
 			window.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
 			window.setSize(480, 360);
 
-			javax.swing.JPanel panel = new javax.swing.JPanel() {
-				public void paintComponent(java.awt.Graphics g) {
-					super.paintComponent(g);
-					paintComponent((java.awt.Graphics2D) g, getWidth(), getHeight());
-				}
-
-				private void paintComponent(java.awt.Graphics2D g, int w, int h) {
-					setBackground(java.awt.Color.BLACK);
-					(new triangle(0, 0, 0, w, 0, 0, w, h, 0, java.awt.Color.WHITE)).draw(g);
-					(new triangle(w/2, (h-110)/2, 0, (w+120)/2, (h+110)/2, 0, (w-120)/2, (h+110)/2, 0, java.awt.Color.RED)).draw(g);
-				}
+			context canvas = new context();
+			canvas.setBackground(java.awt.Color.BLACK);
+			canvas.resize_callback = (c, w, h) -> {
+				c.data = new triangle[] {
+					new triangle(0, 0, 0, w, 0, 0, w, h, 0, java.awt.Color.WHITE),
+					new triangle(w/2, (h-110)/2, 0, (w+120)/2, (h+110)/2, 0, (w-120)/2, (h+110)/2, 0, java.awt.Color.RED)
+				};
 			};
-			window.add(panel);
+			window.add(canvas);
 
 			window.setLocationRelativeTo(null);
 			window.setVisible(true);
 		});
 		System.out.printf("Hello, world!\n");
+	}
+}
+
+class context extends javax.swing.JPanel {
+	private int w;
+	private int h;
+
+	public interface resize_callback_t {
+		public void run(context c, int w, int h);
+	}
+
+	public resize_callback_t resize_callback;
+
+	public triangle[] data;
+
+	public void paintComponent(java.awt.Graphics g) {
+		super.paintComponent(g);
+		if (resize_callback != null) {
+			int new_w = getWidth();
+			int new_h = getHeight();
+			if (new_w != w || new_h != h) {
+				w = new_w;
+				h = new_h;
+				resize_callback.run(this, w, h);
+			}
+		}
+		if (data != null) {
+			java.awt.Graphics2D g2d = (java.awt.Graphics2D) g;
+			for (triangle t : data)
+				t.draw(g2d);
+		}
 	}
 }
 
