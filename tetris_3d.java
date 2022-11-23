@@ -1,5 +1,33 @@
 public class tetris_3d {
 	public static void main(String[] args) {
+		final vec4[] vertices = new vec4[] {
+			new vec4(-1.0f,  1.0f, 0.0f, 1.0f),
+			new vec4( 1.0f,  1.0f, 0.0f, 1.0f),
+			new vec4( 1.0f, -1.0f, 0.0f, 1.0f),
+			new vec4( 0.0f,  0.5f/2.0f, 1, 1),
+			new vec4( 0.2f, -0.5f/2.0f, 1, 1),
+			new vec4(-0.2f, -0.5f/2.0f, 1, 1),
+			new vec4(-3.0f/4.0f, -1.0f, 2.0f, 1.0f),
+			new vec4(-3.0f/4.0f,  1.0f, 2.0f, 1.0f),
+			new vec4(-1.0f, -2.0f/3.0f, 2.0f, 1.0f),
+			new vec4( 1.0f, -2.0f/3.0f, 2.0f, 1.0f)
+		};
+		final java.awt.Color[] colors = new java.awt.Color[] {
+			java.awt.Color.WHITE,
+			java.awt.Color.RED,
+			java.awt.Color.CYAN
+		};
+		final java.awt.Stroke[] strokes = new java.awt.Stroke[] {
+			new java.awt.BasicStroke(1)
+		};
+
+		final int[] triangles_vertices = new int[] {3, 4, 5, 0, 1, 2};
+		final int[] triangles_colors = new int[] {0, 1};
+
+		final int[] lines_vertices = new int[] {6, 7, 8, 9};
+		final int[] lines_colors = new int[] {2, 2};
+		final int[] lines_strokes = new int[] {0, 0};
+
 		javax.swing.SwingUtilities.invokeLater(() -> {
 			javax.swing.JFrame window = new javax.swing.JFrame("Tetris 3D");
 			window.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
@@ -8,44 +36,23 @@ public class tetris_3d {
 			context canvas = new context();
 			canvas.setBackground(java.awt.Color.BLACK);
 			canvas.resize_callback = (c, w, h) -> {
-				vec4[] vertices = new vec4[] {
-					new vec4(0, 0, -1, 1),
-					new vec4(w, 0, -1, 1),
-					new vec4(w, h, -1, 1),
-					new vec4(      w/2, (h-110)/2, 0, 1),
-					new vec4((w+120)/2, (h+110)/2, 0, 1),
-					new vec4((w-120)/2, (h+110)/2, 0, 1),
-					new vec4(w/10, 0, 1, 1),
-					new vec4(w/10, h, 1, 1),
-					new vec4(0, h/7*6, 1, 1),
-					new vec4(w, h/7*6, 1, 1)
-				};
-				java.awt.Color[] colors = new java.awt.Color[] {
-					java.awt.Color.WHITE,
-					java.awt.Color.RED,
-					java.awt.Color.CYAN
-				};
-				java.awt.Stroke[] strokes = new java.awt.Stroke[] {
-					((java.awt.Graphics2D) c.getGraphics()).getStroke()
-				};
-				primitive[] triangles = triangle.construct(vertices, colors,
-					new int[] {
-						3, 4, 5,
-						0, 1, 2,
-					},
-					new int[] {0, 1}
+				vec4[] v = transform.revert_homogeneous_in_place(
+					transform.all(vertices, transform.order(
+						transform.orthographic(1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f),
+						transform.viewport(0, 0, w, h)
+					))
 				);
-				primitive[] lines = line.construct(vertices, colors, strokes,
-					new int[] {
-						6, 7,
-						8, 9
-					},
-					new int[] {2, 2},
-					new int[] {0, 0}
+				int nl = lines_vertices.length / 2;
+				int nt = triangles_vertices.length / 3;
+				primitive[] data = new primitive[nl+nt];
+				System.arraycopy(
+					line.construct(v, colors, strokes, lines_vertices, lines_colors, lines_strokes),
+					0, data, 0, nl
 				);
-				primitive[] data = new primitive[triangles.length + lines.length];
-				System.arraycopy(lines, 0, data, 0, lines.length);
-				System.arraycopy(triangles, 0, data, lines.length, triangles.length);
+				System.arraycopy(
+					triangle.construct(v, colors, triangles_vertices, triangles_colors),
+					0, data, nl, nt
+				);
 				java.util.Arrays.sort(data, primitive.compare);
 				c.data = data;
 			};
@@ -55,6 +62,118 @@ public class tetris_3d {
 			window.setVisible(true);
 		});
 		System.out.printf("Hello, world!\n");
+	}
+}
+
+class transform {
+	public static mat4 order(mat4... matrices) {
+		if (matrices.length == 0)
+			return new mat4(
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f
+			);
+		mat4 cumulative = matrices[0];
+		for (int i = 1; i < matrices.length; ++i)
+			cumulative = matrices[i].multiply(cumulative);
+		return cumulative;
+	}
+
+	public static vec4[] all(vec4[] vertices, mat4 matrix) {
+		vec4[] new_vertices = new vec4[vertices.length];
+		for (int i = 0; i < vertices.length; ++i)
+			new_vertices[i] = matrix.multiply(vertices[i]);
+		return new_vertices;
+	}
+
+	public static vec4[] revert_homogeneous(vec4[] vertices) {
+		vec4[] new_vertices = new vec4[vertices.length];
+		for (int i = 0; i < vertices.length; ++i)
+			new_vertices[i] = vertices[i].divide(vertices[i].w());
+		return new_vertices;
+	}
+
+	public static vec4[] revert_homogeneous_in_place(vec4[] vertices) {
+		for (int i = 0; i < vertices.length; ++i)
+			vertices[i]
+				.x(vertices[i].x() / vertices[i].w())
+				.y(vertices[i].y() / vertices[i].w())
+				.z(vertices[i].z() / vertices[i].w());
+		return vertices;
+	}
+
+	public static mat4 translate(float x, float y, float z) {
+		return new mat4(
+			1.0f, 0.0f, 0.0f,    x,
+			0.0f, 1.0f, 0.0f,    y,
+			0.0f, 0.0f, 1.0f,    z,
+			0.0f, 0.0f, 0.0f, 1.0f
+		);
+	}
+
+	public static mat4 scale(float x, float y, float z) {
+		return new mat4(
+			   x, 0.0f, 0.0f, 0.0f,
+			0.0f,    y, 0.0f, 0.0f,
+			0.0f, 0.0f,    z, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		);
+	}
+
+	public static mat4 rotate_x(float a) {
+		float sin = (float) Math.sin(a);
+		float cos = (float) Math.cos(a);
+		return new mat4(
+			1.0f, 0.0f, 0.0f, 0.0f,
+			0.0f,  cos, -sin, 0.0f,
+			0.0f,  sin,  cos, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		);
+	}
+
+	public static mat4 rotate_y(float a) {
+		float sin = (float) Math.sin(a);
+		float cos = (float) Math.cos(a);
+		return new mat4(
+			 cos, 0.0f, -sin, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			 sin, 0.0f,  cos, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		);
+	}
+
+	public static mat4 rotate_z(float a) {
+		float sin = (float) Math.sin(a);
+		float cos = (float) Math.cos(a);
+		return new mat4(
+			 cos, -sin, 0.0f, 0.0f,
+			 sin,  cos, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		);
+	}
+
+	public static mat4 orthographic(float r, float l, float t, float b, float n, float f) {
+		return new mat4(
+			2.0f/(r-l),       0.0f,       0.0f, (r+l)/(l-r),
+			      0.0f, 2.0f/(t-b),       0.0f, (t+b)/(b-t),
+			      0.0f,       0.0f, 2.0f/(n-f), (f+n)/(n-f),
+			      0.0f,       0.0f,       0.0f,       1.0f
+		);
+	}
+
+	public static mat4 frustum(float r, float l, float t, float b, float n, float f) {
+		return new mat4(
+			1.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		);
+	}
+
+	public static mat4 viewport(int x, int y, int w, int h) {
+		return transform.translate(w/2.0f+x, h/2.0f+y, 0).multiply(transform.scale(w/2.0f, -h/2.0f, 1.0f));
 	}
 }
 
