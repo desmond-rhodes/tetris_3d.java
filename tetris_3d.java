@@ -21,12 +21,14 @@ public class tetris_3d {
 			new java.awt.BasicStroke(1)
 		};
 
-		final int[] triangles_vertices = new int[] {3, 4, 5, 0, 1, 2};
-		final int[] triangles_colors = new int[] {0, 1};
-
-		final int[] lines_vertices = new int[] {6, 7, 8, 9};
-		final int[] lines_colors = new int[] {2, 2};
-		final int[] lines_strokes = new int[] {0, 0};
+		final int[] triangles = new int[] {
+			3, 4, 5, 0,
+			0, 1, 2, 1
+		};
+		final int[] lines = new int[] {
+			6, 7, 2, 0,
+			8, 9, 2, 0
+		};
 
 		javax.swing.SwingUtilities.invokeLater(() -> {
 			javax.swing.JFrame window = new javax.swing.JFrame("Tetris 3D");
@@ -42,17 +44,11 @@ public class tetris_3d {
 						transform.viewport(0, 0, w, h)
 					))
 				);
-				int nl = lines_vertices.length / 2;
-				int nt = triangles_vertices.length / 3;
+				int nl = lines.length / 4;
+				int nt = triangles.length / 4;
 				primitive[] data = new primitive[nl+nt];
-				System.arraycopy(
-					line.construct(v, colors, strokes, lines_vertices, lines_colors, lines_strokes),
-					0, data, 0, nl
-				);
-				System.arraycopy(
-					triangle.construct(v, colors, triangles_vertices, triangles_colors),
-					0, data, nl, nt
-				);
+				System.arraycopy(line.construct(v, colors, strokes, lines), 0, data, 0, nl);
+				System.arraycopy(triangle.construct(v, colors, triangles), 0, data, nl, nt);
 				java.util.Arrays.sort(data, primitive.compare);
 				c.data = data;
 			};
@@ -240,19 +236,19 @@ class triangle extends primitive {
 		this(v1, v2, v3, new java.awt.Color(c.r(), c.g(), c.b(), c.a()));
 	}
 
-	public static triangle[] construct(vec4[] v, java.awt.Color[] c, int[] vi, int[] ci) {
-		triangle[] data = new triangle[vi.length / 3];
-		for (int i = 0, j = 0; i < vi.length; i += 3, ++j)
-			data[j] = new triangle(v[vi[i]], v[vi[i+1]], v[vi[i+2]], c[ci[j]]);
+	public static triangle[] construct(vec4[] v, java.awt.Color[] c, int[] vi) {
+		triangle[] data = new triangle[vi.length / 4];
+		for (int i = 0, j = 0; i < vi.length; i += 4, ++j)
+			data[j] = new triangle(v[vi[i]], v[vi[i+1]], v[vi[i+2]], c[vi[i+3]]);
 		return data;
 	}
 
-	public static triangle[] construct(vec4[] v, vec4[] c, int[] vi, int[] ci) {
-		triangle[] data = new triangle[vi.length / 3];
+	public static triangle[] construct(vec4[] v, vec4[] c, int[] vi) {
+		triangle[] data = new triangle[vi.length / 4];
 		java.awt.Color[] cc = new java.awt.Color[c.length];
-		for (int i = 0, j = 0; i < vi.length; i += 3, ++j) {
+		for (int i = 0, j = 0; i < vi.length; i += 4, ++j) {
 			if (cc[j] == null)
-				cc[j] = new java.awt.Color(c[ci[j]].r(), c[ci[j]].g(), c[ci[j]].b(), c[ci[j]].a());
+				cc[j] = new java.awt.Color(c[vi[i+3]].r(), c[vi[i+3]].g(), c[vi[i+3]].b(), c[vi[i+3]].a());
 			data[j] = new triangle(v[vi[i]], v[vi[i+1]], v[vi[i+2]], cc[j]);
 		}
 		return data;
@@ -284,20 +280,20 @@ class line extends primitive {
 		this(v1, v2, new java.awt.Color(c.r(), c.g(), c.b(), c.a()), s);
 	}
 
-	public static line[] construct(vec4[] v, java.awt.Color[] c, java.awt.Stroke[] s, int[] vi, int[] ci, int[] si) {
-		line[] data = new line[vi.length / 2];
-		for (int i = 0, j = 0; i < vi.length; i += 2, ++j)
-			data[j] = new line(v[vi[i]], v[vi[i+1]], c[ci[j]], s[si[j]]);
+	public static line[] construct(vec4[] v, java.awt.Color[] c, java.awt.Stroke[] s, int[] vi) {
+		line[] data = new line[vi.length / 4];
+		for (int i = 0, j = 0; i < vi.length; i += 4, ++j)
+			data[j] = new line(v[vi[i]], v[vi[i+1]], c[vi[i+2]], s[vi[i+3]]);
 		return data;
 	}
 
-	public static line[] construct(vec4[] v, vec4[] c, java.awt.Stroke[] s, int[] vi, int[] ci, int[] si) {
-		line[] data = new line[vi.length / 2];
+	public static line[] construct(vec4[] v, vec4[] c, java.awt.Stroke[] s, int[] vi) {
+		line[] data = new line[vi.length / 4];
 		java.awt.Color[] cc = new java.awt.Color[c.length];
-		for (int i = 0, j = 0; i < vi.length; i += 2, ++j) {
+		for (int i = 0, j = 0; i < vi.length; i += 4, ++j) {
 			if (cc[j] == null)
-				cc[j] = new java.awt.Color(c[ci[j]].r(), c[ci[j]].g(), c[ci[j]].b(), c[ci[j]].a());
-			data[j] = new line(v[vi[i]], v[vi[i+1]], cc[j], s[si[j]]);
+				cc[j] = new java.awt.Color(c[vi[i+2]].r(), c[vi[i+2]].g(), c[vi[i+2]].b(), c[vi[i+2]].a());
+			data[j] = new line(v[vi[i]], v[vi[i+1]], cc[j], s[vi[i+3]]);
 		}
 		return data;
 	}
